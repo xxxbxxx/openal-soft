@@ -854,11 +854,35 @@ static HRESULT ALCmmdevPlayback_resetProxy(ALCmmdevPlayback *self)
     CoTaskMemFree(wfx);
     wfx = NULL;
 
-    buf_time = ((REFERENCE_TIME)device->UpdateSize*device->NumUpdates*10000000 +
-                                device->Frequency-1) / device->Frequency;
+    hr = IAudioClient_GetDevicePeriod(self->client, &min_per, NULL);
+    if(FAILED(hr))
+    {
+        ERR("Failed to get device period: 0x%08lx\n", hr);
+        return hr;
+    }
 
-    if(!(device->Flags&DEVICE_FREQUENCY_REQUEST))
+    // adjust requested update params to better fit the device
+    // (et après je laisse le code normal, pas le temps de trop tout verifier tester)
+    if(!(device->Flags&DEVICE_FREQUENCY_REQUEST)) 
+    {
+        UINT32 update_len_in_device_samples = (((UINT64)device->UpdateSize*device->NumUpdates * OutputType.Format.nSamplesPerSec) + device->Frequency-1) / device->Frequency;
+
         device->Frequency = OutputType.Format.nSamplesPerSec;
+
+        min_len = (UINT32)((min_per*device->Frequency + 10000000-1) / 10000000);
+        min_len = ((min_len+3) & (~3));    // align on x4
+
+        /* Find the nearest multiple of the period size to the update size */
+        if(min_len < device->UpdateSize)
+            min_len *= (device->UpdateSize + min_len/2)/min_len;
+
+        device->UpdateSize = min_len;
+        device->NumUpdates = (update_len_in_device_samples + min_len-1) / min_len;
+    }
+
+    buf_time = ((REFERENCE_TIME)device->UpdateSize*device->NumUpdates*10000000 +
+                               device->Frequency-1) / device->Frequency;
+
     if(!(device->Flags&DEVICE_CHANNELS_REQUEST))
     {
         if(OutputType.Format.nChannels == 1 && OutputType.dwChannelMask == MONO)
@@ -1043,6 +1067,7 @@ static HRESULT ALCmmdevPlayback_resetProxy(ALCmmdevPlayback *self)
     if(SUCCEEDED(hr))
     {
         min_len = (UINT32)((min_per*device->Frequency + 10000000-1) / 10000000);
+        min_len = ((min_len+3) & (~3));    // align on x4
         /* Find the nearest multiple of the period size to the update size */
         if(min_len < device->UpdateSize)
             min_len *= (device->UpdateSize + min_len/2)/min_len;
