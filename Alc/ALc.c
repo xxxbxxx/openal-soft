@@ -4049,13 +4049,20 @@ ALC_API ALCdevice* ALC_APIENTRY alcOpenDevice(const ALCchar *deviceName)
     //Set output format
     device->FmtChans = DevFmtChannelsDefault;
     device->FmtType = DevFmtTypeDefault;
-    device->Frequency = DEFAULT_OUTPUT_RATE;
     device->IsHeadphones = AL_FALSE;
     device->AmbiLayout = AmbiLayout_Default;
     device->AmbiScale = AmbiNorm_Default;
     device->LimiterState = ALC_TRUE;
-    device->NumUpdates = 3;
-    device->UpdateSize = 1024;
+
+    // Settings from maniaplanet / worked fine on WinXP
+    // device->Frequency = DEFAULT_OUTPUT_RATE;  (44100)
+    // device->NumUpdates = 6;
+    // device->UpdateSize = 384;
+
+    // setting for TMTurbo. 48000 seems the common default in win7 / win10. and this latency seems ok. 3 updates glitches sometimes under very heavy cpu load.
+    device->Frequency = 48000;
+    device->NumUpdates = 4;
+    device->UpdateSize = 480;
 
     device->SourcesMax = 256;
     device->AuxiliaryEffectSlotMax = 64;
