@@ -40,7 +40,7 @@ OPTION(ALSOFT_EXAMPLES  "Build and install example programs"  ON)
 OPTION(ALSOFT_TESTS     "Build and install test programs"     ON)
 
 OPTION(ALSOFT_CONFIG "Install alsoft.conf sample configuration file" ON)
-OPTION(ALSOFT_HRTF_DEFS "Install HRTF definition files" ON)
+OPTION(ALSOFT_HRTF_DEFS "Install HRTF definition files" OFF)
 OPTION(ALSOFT_INSTALL "Install headers and libraries" ON)
 
 

@@ -65,6 +65,16 @@ static const ALchar magicMarker01[8] = "MinPHR01";
  * directional sounds. */
 static const ALfloat PassthruCoeff = 32767.0f * 0.707106781187f/*sqrt(0.5)*/;
 
+/* Define the default HRTF:
+ *  ALubyte  defaultAzCount  [DefaultHrtf.evCount]
+ *  ALushort defaultEvOffset [DefaultHrtf.evCount]
+ *  ALshort  defaultCoeffs   [DefaultHrtf.irCount * defaultHrtf.irSize]
+ *  ALubyte  defaultDelays   [DefaultHrtf.irCount]
+ *
+ *  struct Hrtf DefaultHrtf
+ */
+#include "hrtf_tables.inc"
+
 static struct Hrtf *LoadedHrtfs = NULL;
 
 /* Calculate the elevation indices given the polar elevation in radians.
@@ -820,7 +830,21 @@ error:
 vector_HrtfEntry EnumerateHrtf(const_al_string devname)
 {
     vector_HrtfEntry list = VECTOR_INIT_STATIC();
-    const char *fnamelist = "%s.mhr";
+    const char *fnamelist = "";
+
+
+	const struct Hrtf* Hrtf = DefaultHrtfs;
+	while (Hrtf) {
+		HrtfEntry entry = { AL_STRING_INIT_STATIC(), AL_STRING_INIT_STATIC(), Hrtf };
+		char str[64];
+		al_string_copy_cstr(&entry.name, "internal");
+		snprintf(str, sizeof(str), " %dHz", Hrtf->sampleRate);
+		al_string_append_cstr(&entry.name, str);
+
+	    VECTOR_PUSH_BACK(list, entry);
+
+		Hrtf = Hrtf->next;
+	}
 
     ConfigValueStr(al_string_get_cstr(devname), NULL, "hrtf_tables", &fnamelist);
     while(fnamelist && *fnamelist)
