@@ -214,6 +214,22 @@ static void ALCdsoundPlayback_Construct(ALCdsoundPlayback *self, ALCdevice *devi
 }
 
 
+static ALvoid aluMixDataChunked(ALCdevice *device, VOID *buffer, ALuint len, ALuint FrameSize)
+{
+    ALuint len_done, chunk;
+	BYTE* buf = (BYTE*)buffer;
+
+    len_done = 0;
+    do
+    {
+        chunk = min((len - len_done), 128);
+        aluMixData(device, buf + FrameSize*len_done, chunk);
+        len_done += chunk;
+        SwitchToThread();
+    }
+    while (len_done < len);
+}
+
 FORCE_ALIGN static int ALCdsoundPlayback_mixerProc(void *ptr)
 {
     ALCdsoundPlayback *self = ptr;
@@ -299,8 +315,8 @@ FORCE_ALIGN static int ALCdsoundPlayback_mixerProc(void *ptr)
         if(SUCCEEDED(err))
         {
             // If we have an active context, mix data directly into output buffer otherwise fill with silence
-            aluMixData(device, WritePtr1, WriteCnt1/FrameSize);
-            aluMixData(device, WritePtr2, WriteCnt2/FrameSize);
+            aluMixDataChunked(device, WritePtr1, WriteCnt1/FrameSize, FrameSize);
+            aluMixDataChunked(device, WritePtr2, WriteCnt2/FrameSize, FrameSize);
 
             // Unlock output buffer only when successfully locked
             IDirectSoundBuffer_Unlock(self->Buffer, WritePtr1, WriteCnt1, WritePtr2, WriteCnt2);

@@ -560,7 +560,7 @@ FORCE_ALIGN static int ALCmmdevPlayback_mixerProc(void *arg)
     ALCmmdevPlayback *self = arg;
     ALCdevice *device = STATIC_CAST(ALCbackend, self)->mDevice;
     UINT32 buffer_len, written;
-    ALuint update_size, len;
+    ALuint update_size, len, frame_size, len_done, chunk;
     BYTE *buffer;
     HRESULT hr;
 
@@ -577,6 +577,7 @@ FORCE_ALIGN static int ALCmmdevPlayback_mixerProc(void *arg)
     SetRTPriority();
     althrd_setname(althrd_current(), MIXER_THREAD_NAME);
 
+	frame_size = FrameSizeFromDevFmt(device->FmtChans, device->FmtType);
     update_size = device->UpdateSize;
     buffer_len = update_size * device->NumUpdates;
     while(!self->killNow)
@@ -606,10 +607,18 @@ FORCE_ALIGN static int ALCmmdevPlayback_mixerProc(void *arg)
         hr = IAudioRenderClient_GetBuffer(self->render, len, &buffer);
         if(SUCCEEDED(hr))
         {
-            V0(device->Backend,lock)();
-            aluMixData(device, buffer, len);
-            self->Padding = written + len;
-            V0(device->Backend,unlock)();
+            // V0(device->Backend,lock)();
+            len_done = 0;
+            do
+            {
+                chunk = min((len - len_done), 128);
+                aluMixData(device, buffer + frame_size*len_done, chunk);
+                len_done += chunk;
+                self->Padding = written + len_done;
+                SwitchToThread();
+            }
+            while (len_done < len);
+            // V0(device->Backend,unlock)();
             hr = IAudioRenderClient_ReleaseBuffer(self->render, len, 0);
         }
         if(FAILED(hr))
