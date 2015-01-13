@@ -347,6 +347,9 @@ void ALfilterState_setParams(ALfilterState *filter, ALfilterType type, ALfloat g
     cos_w0 = cosf(w0);
     alpha = sin_w0/2.0f * rcpQ;
 
+    // S = 0.75f;
+    // A = sqrtf(gain);		--> should be this value, but " For the reference frequency to act as the target frequency like EFX filters want, rather than the midpoint, I need to double the dB attenuation, and since sqrt(gain*gain) == gain, it can just take the gain value as-is. "
+
     /* Calculate filter coefficients depending on filter type */
     switch(type)
     {
