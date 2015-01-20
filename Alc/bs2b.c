@@ -26,6 +26,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "alMain.h"
 #include "bs2b.h"
 #include "alu.h"
 

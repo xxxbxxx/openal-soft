@@ -39,6 +39,11 @@
 
 #include "hrtf.h"
 
+#ifdef REDEFINE_RESTRICT
+// must be done *after* including windows.h, 
+// which does #define _CRTRESTRICT __declspec(restrict)
+#define restrict __restrict
+#endif
 #ifndef ALC_SOFT_device_clock
 #define ALC_SOFT_device_clock 1
 typedef int64_t ALCint64SOFT;

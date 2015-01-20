@@ -83,9 +83,9 @@ extern inline ALfloat resample_fir8(ALfloat val0, ALfloat val1, ALfloat val2, AL
 
 extern inline void aluVectorSet(aluVector *restrict vector, ALfloat x, ALfloat y, ALfloat z, ALfloat w);
 
-extern inline void aluMatrixfSetRow(aluMatrixf *matrix, ALuint row,
+extern inline void aluMatrixfSetRow(aluMatrixf *restrict matrix, ALuint row,
                                     ALfloat m0, ALfloat m1, ALfloat m2, ALfloat m3);
-extern inline void aluMatrixfSet(aluMatrixf *matrix,
+extern inline void aluMatrixfSet(aluMatrixf *restrict matrix,
                                  ALfloat m00, ALfloat m01, ALfloat m02, ALfloat m03,
                                  ALfloat m10, ALfloat m11, ALfloat m12, ALfloat m13,
                                  ALfloat m20, ALfloat m21, ALfloat m22, ALfloat m23,

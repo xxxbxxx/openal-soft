@@ -136,8 +136,19 @@ IF(MSVC)
     CHECK_C_SOURCE_COMPILES("int *restrict foo;
                              int main() {return 0;}" HAVE_RESTRICT)
     IF(NOT HAVE_RESTRICT)
-        ADD_DEFINITIONS("-Drestrict=")
-        SET(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Drestrict=")
+        # Slightly convoluted way to do this, because MSVC may barf if restrict is
+        # defined to __restrict.
+        CHECK_C_SOURCE_COMPILES("#include <stdlib.h>
+                                 #define restrict __restrict
+                                 int *restrict foo;
+                                 int main() {return 0;}" HAVE___RESTRICT)
+        IF(HAVE___RESTRICT)
+            ADD_DEFINITIONS(-DREDEFINE_RESTRICT)
+            SET(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -DREDEFINE_RESTRICT")
+        ELSE()
+            ADD_DEFINITIONS("-Drestrict=")
+            SET(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Drestrict=")
+        ENDIF()
     ENDIF()
 
     CHECK_C_SOURCE_COMPILES("inline void foo(void) { }
