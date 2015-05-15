@@ -202,3 +202,11 @@
 
 /* Define if we have pthread_mutex_timedlock() */
 #cmakedefine HAVE_PTHREAD_MUTEX_TIMEDLOCK
+
+
+/* Define if we want AL_EXT_SOURCE_RADIUS extension */
+#cmakedefine WITH_EXT_SOURCE_RADIUS
+
+/* Define if we want AL_SOFT_buffer_sub_data extension */
+#cmakedefine WITH_EXT_BUFFER_SUB_DATA
+

@@ -388,11 +388,16 @@ static const ALCenums enumeration[] = {
     DECL(AL_ROLLOFF_FACTOR),
     DECL(AL_CONE_OUTER_GAIN),
     DECL(AL_MAX_DISTANCE),
+#ifdef WITH_EXT_SOURCE_RADIUS
+    DECL(AL_SOURCE_RADIUS),
+#endif
     DECL(AL_SEC_OFFSET),
     DECL(AL_SAMPLE_OFFSET),
-    DECL(AL_SAMPLE_RW_OFFSETS_SOFT),
     DECL(AL_BYTE_OFFSET),
+#ifdef WITH_EXT_BUFFER_SUB_DATA
+    DECL(AL_SAMPLE_RW_OFFSETS_SOFT),
     DECL(AL_BYTE_RW_OFFSETS_SOFT),
+#endif
     DECL(AL_SOURCE_TYPE),
     DECL(AL_STATIC),
     DECL(AL_STREAMING),
@@ -710,7 +715,13 @@ static const ALchar alExtList[] =
     "AL_EXT_FLOAT32 AL_EXT_IMA4 AL_EXT_LINEAR_DISTANCE AL_EXT_MCFORMATS "
     "AL_EXT_MULAW AL_EXT_MULAW_BFORMAT AL_EXT_MULAW_MCFORMATS AL_EXT_OFFSET "
     "AL_EXT_source_distance_model AL_LOKI_quadriphonic AL_SOFT_block_alignment "
-    "AL_SOFT_buffer_samples AL_SOFT_buffer_sub_data AL_SOFT_deferred_updates "
+    "AL_SOFT_buffer_samples AL_SOFT_deferred_updates "
+#ifdef WITH_EXT_BUFFER_SUB_DATA
+	"AL_SOFT_buffer_sub_data "
+#endif
+#ifdef WITH_EXT_SOURCE_RADIUS
+	"AL_EXT_SOURCE_RADIUS "
+#endif
     "AL_SOFT_direct_channels AL_SOFT_loop_points AL_SOFT_MSADPCM "
     "AL_SOFT_source_latency AL_SOFT_source_length";
 

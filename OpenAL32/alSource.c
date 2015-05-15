@@ -86,6 +86,10 @@ typedef enum SourceProp {
     srcDirectFilter = AL_DIRECT_FILTER,
     srcAuxSendFilter = AL_AUXILIARY_SEND_FILTER,
 
+#ifdef WITH_EXT_SOURCE_RADIUS
+    /* AL_EXT_SOURCE_RADIUS */
+    srcSourceRadius = AL_SOURCE_RADIUS,
+#endif
     /* AL_SOFT_direct_channels */
     srcDirectChannelsSOFT = AL_DIRECT_CHANNELS_SOFT,
 
@@ -96,9 +100,11 @@ typedef enum SourceProp {
     srcSampleLengthSOFT = AL_SAMPLE_LENGTH_SOFT,
     srcSecLengthSOFT = AL_SEC_LENGTH_SOFT,
 
+#ifdef WITH_EXT_BUFFER_SUB_DATA
     /* AL_SOFT_buffer_sub_data / AL_SOFT_buffer_samples */
     srcSampleRWOffsetsSOFT = AL_SAMPLE_RW_OFFSETS_SOFT,
     srcByteRWOffsetsSOFT = AL_BYTE_RW_OFFSETS_SOFT,
+#endif
 
     /* AL_SOFT_source_latency */
     srcSampleOffsetLatencySOFT = AL_SAMPLE_OFFSET_LATENCY_SOFT,
@@ -153,11 +159,16 @@ static ALint FloatValsByProp(ALenum prop)
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_SEC_LENGTH_SOFT:
+#ifdef WITH_EXT_SOURCE_RADIUS
+        case AL_SOURCE_RADIUS:
+#endif
             return 1;
 
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_SAMPLE_RW_OFFSETS_SOFT:
         case AL_BYTE_RW_OFFSETS_SOFT:
             return 2;
+#endif
 
         case AL_POSITION:
         case AL_VELOCITY:
@@ -216,10 +227,15 @@ static ALint DoubleValsByProp(ALenum prop)
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_SEC_LENGTH_SOFT:
+#ifdef WITH_EXT_SOURCE_RADIUS
+        case AL_SOURCE_RADIUS:
+#endif
             return 1;
 
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_SAMPLE_RW_OFFSETS_SOFT:
         case AL_BYTE_RW_OFFSETS_SOFT:
+#endif
         case AL_SEC_OFFSET_LATENCY_SOFT:
             return 2;
 
@@ -280,11 +296,16 @@ static ALint IntValsByProp(ALenum prop)
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_SEC_LENGTH_SOFT:
+#ifdef WITH_EXT_SOURCE_RADIUS
+        case AL_SOURCE_RADIUS:
+#endif
             return 1;
 
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_SAMPLE_RW_OFFSETS_SOFT:
         case AL_BYTE_RW_OFFSETS_SOFT:
             return 2;
+#endif
 
         case AL_POSITION:
         case AL_VELOCITY:
@@ -341,10 +362,15 @@ static ALint Int64ValsByProp(ALenum prop)
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_SEC_LENGTH_SOFT:
+#ifdef WITH_EXT_SOURCE_RADIUS
+        case AL_SOURCE_RADIUS:
+#endif
             return 1;
 
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_SAMPLE_RW_OFFSETS_SOFT:
         case AL_BYTE_RW_OFFSETS_SOFT:
+#endif
         case AL_SAMPLE_OFFSET_LATENCY_SOFT:
             return 2;
 
@@ -375,8 +401,10 @@ static ALboolean SetSourcefv(ALsource *Source, ALCcontext *Context, SourceProp p
 
     switch(prop)
     {
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_BYTE_RW_OFFSETS_SOFT:
         case AL_SAMPLE_RW_OFFSETS_SOFT:
+#endif
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_SEC_LENGTH_SOFT:
@@ -481,6 +509,16 @@ static ALboolean SetSourcefv(ALsource *Source, ALCcontext *Context, SourceProp p
             Source->DopplerFactor = *values;
             ATOMIC_STORE(&Source->NeedsUpdate, AL_TRUE);
             return AL_TRUE;
+
+
+#ifdef WITH_EXT_SOURCE_RADIUS
+        case AL_SOURCE_RADIUS:
+            CHECKVAL(*values >= 0.0f);
+
+            Source->Radius = *values;
+            ATOMIC_STORE(&Source->NeedsUpdate, AL_TRUE);
+            return AL_TRUE;
+#endif
 
         case AL_SEC_OFFSET:
         case AL_SAMPLE_OFFSET:
@@ -594,8 +632,10 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_SOURCE_TYPE:
         case AL_BUFFERS_QUEUED:
         case AL_BUFFERS_PROCESSED:
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_SAMPLE_RW_OFFSETS_SOFT:
         case AL_BYTE_RW_OFFSETS_SOFT:
+#endif
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_SEC_LENGTH_SOFT:
@@ -807,6 +847,9 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_CONE_OUTER_GAINHF:
         case AL_AIR_ABSORPTION_FACTOR:
         case AL_ROOM_ROLLOFF_FACTOR:
+#ifdef WITH_EXT_SOURCE_RADIUS
+        case AL_SOURCE_RADIUS:
+#endif
             fvals[0] = (ALfloat)*values;
             return SetSourcefv(Source, Context, (int)prop, fvals);
 
@@ -849,8 +892,10 @@ static ALboolean SetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
         case AL_BUFFERS_QUEUED:
         case AL_BUFFERS_PROCESSED:
         case AL_SOURCE_STATE:
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_SAMPLE_RW_OFFSETS_SOFT:
         case AL_BYTE_RW_OFFSETS_SOFT:
+#endif
         case AL_SAMPLE_OFFSET_LATENCY_SOFT:
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
@@ -909,6 +954,9 @@ static ALboolean SetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
         case AL_CONE_OUTER_GAINHF:
         case AL_AIR_ABSORPTION_FACTOR:
         case AL_ROOM_ROLLOFF_FACTOR:
+#ifdef WITH_EXT_SOURCE_RADIUS
+        case AL_SOURCE_RADIUS:
+#endif
             fvals[0] = (ALfloat)*values;
             return SetSourcefv(Source, Context, (int)prop, fvals);
 
@@ -947,7 +995,9 @@ static ALboolean GetSourcedv(ALsource *Source, ALCcontext *Context, SourceProp p
     ALCdevice *device = Context->Device;
     ALbufferlistitem *BufferList;
     ALdouble offsets[2];
+#ifdef WITH_EXT_BUFFER_SUB_DATA
     ALdouble updateLen;
+#endif
     ALint ivals[3];
     ALboolean err;
 
@@ -1018,6 +1068,13 @@ static ALboolean GetSourcedv(ALsource *Source, ALCcontext *Context, SourceProp p
             *values = Source->DopplerFactor;
             return AL_TRUE;
 
+
+#ifdef WITH_EXT_SOURCE_RADIUS
+        case AL_SOURCE_RADIUS:
+            *values = Source->Radius;
+            return AL_TRUE;
+#endif
+
         case AL_SEC_LENGTH_SOFT:
             ReadLock(&Source->queue_lock);
             if(!(BufferList=ATOMIC_LOAD(&Source->queue)))
@@ -1039,6 +1096,7 @@ static ALboolean GetSourcedv(ALsource *Source, ALCcontext *Context, SourceProp p
             ReadUnlock(&Source->queue_lock);
             return AL_TRUE;
 
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_SAMPLE_RW_OFFSETS_SOFT:
         case AL_BYTE_RW_OFFSETS_SOFT:
             LockContext(Context);
@@ -1046,6 +1104,7 @@ static ALboolean GetSourcedv(ALsource *Source, ALCcontext *Context, SourceProp p
             GetSourceOffsets(Source, prop, values, updateLen);
             UnlockContext(Context);
             return AL_TRUE;
+#endif
 
         case AL_SEC_OFFSET_LATENCY_SOFT:
             LockContext(Context);
@@ -1283,11 +1342,15 @@ static ALboolean GetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_CONE_OUTER_GAINHF:
         case AL_SEC_LENGTH_SOFT:
+#ifdef WITH_EXT_SOURCE_RADIUS
+        case AL_SOURCE_RADIUS:
+#endif
             if((err=GetSourcedv(Source, Context, prop, dvals)) != AL_FALSE)
                 *values = (ALint)dvals[0];
             return err;
 
         /* 2x float/double */
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_SAMPLE_RW_OFFSETS_SOFT:
         case AL_BYTE_RW_OFFSETS_SOFT:
             if((err=GetSourcedv(Source, Context, prop, dvals)) != AL_FALSE)
@@ -1296,6 +1359,7 @@ static ALboolean GetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
                 values[1] = (ALint)dvals[1];
             }
             return err;
+#endif
 
         /* 3x float/double */
         case AL_POSITION:
@@ -1371,11 +1435,15 @@ static ALboolean GetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_CONE_OUTER_GAINHF:
         case AL_SEC_LENGTH_SOFT:
+#ifdef WITH_EXT_SOURCE_RADIUS
+        case AL_SOURCE_RADIUS:
+#endif
             if((err=GetSourcedv(Source, Context, prop, dvals)) != AL_FALSE)
                 *values = (ALint64)dvals[0];
             return err;
 
         /* 2x float/double */
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_SAMPLE_RW_OFFSETS_SOFT:
         case AL_BYTE_RW_OFFSETS_SOFT:
             if((err=GetSourcedv(Source, Context, prop, dvals)) != AL_FALSE)
@@ -1384,6 +1452,7 @@ static ALboolean GetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
                 values[1] = (ALint64)dvals[1];
             }
             return err;
+#endif
 
         /* 3x float/double */
         case AL_POSITION:
@@ -2856,13 +2925,17 @@ static ALvoid GetSourceOffsets(ALsource *Source, ALenum name, ALdouble *offset, 
             break;
 
         case AL_SAMPLE_OFFSET:
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_SAMPLE_RW_OFFSETS_SOFT:
+#endif
             offset[0] = readPos + (ALdouble)readPosFrac/FRACTIONONE;
             offset[1] = (ALdouble)writePos;
             break;
 
         case AL_BYTE_OFFSET:
+#ifdef WITH_EXT_BUFFER_SUB_DATA
         case AL_BYTE_RW_OFFSETS_SOFT:
+#endif
             if(Buffer->OriginalType == UserFmtIMA4)
             {
                 ALsizei align = (Buffer->OriginalAlign-1)/2 + 4;
