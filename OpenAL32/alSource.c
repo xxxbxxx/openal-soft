@@ -2731,7 +2731,7 @@ ALvoid SetSourceState(ALsource *Source, ALCcontext *Context, ALenum state)
             voice->Send[i].Counter = 0;
         }
 
-        if(BufferList->buffer->FmtChannels == FmtMono)
+        if(!Source->DirectChannels && BufferList->buffer->FmtChannels == FmtMono)
             voice->Update = CalcSourceParams;
         else
             voice->Update = CalcNonAttnSourceParams;
