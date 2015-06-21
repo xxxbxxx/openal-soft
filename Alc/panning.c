@@ -216,6 +216,91 @@ void ComputeBFormatGains(const ALCdevice *device, const ALfloat mtx[4], ALfloat 
         gains[i] = 0.0f;
 }
 
+static void SetGainByChannelName(const ALCdevice *device, ALfloat gains[MAX_OUTPUT_CHANNELS], enum Channel chan, ALfloat ingain)
+{
+    ALint idx;
+    if((idx=GetChannelIdxByName(device, chan)) != -1)
+        gains[idx] = ingain;
+}
+
+void ComputeDirect71DownmixGains(const ALCdevice *device, const ALfloat channelmatrix[8], ALfloat ingain, ALfloat gains[MAX_OUTPUT_CHANNELS])
+{
+    ALfloat FL  = channelmatrix[0];
+    ALfloat FR  = channelmatrix[1];
+    ALfloat FC  = channelmatrix[2];
+    ALfloat Lfe = channelmatrix[3];
+    ALfloat SL  = channelmatrix[4];
+    ALfloat SR  = channelmatrix[5];
+    ALfloat BL  = channelmatrix[6];
+    ALfloat BR  = channelmatrix[7];
+
+    ALuint i;
+    for(i = 0;i < MAX_OUTPUT_CHANNELS;i++)
+        gains[i] = 0.0f;
+
+    if (device->Hrtf) {
+        gains[0] = ingain * (FL + 0.7071f*FC + 0.7071f*SL + 0.7071f*BL);        /* FrontLeft */
+        gains[1] = ingain * (FR + 0.7071f*FC + 0.7071f*SR + 0.7071f*BR);        /* FrontRight */
+        return;
+    }
+
+    switch (device->FmtChans) {
+    case DevFmtMono:
+        SetGainByChannelName(device, gains, FrontCenter, ingain * (FC + (FL + 0.7071f*SL + 0.7071f*BL)*0.7071f 
+                                                                    + (FR + 0.7071f*SR + 0.7071f*BR)*0.7071f));
+        break;
+    case DevFmtStereo:
+        SetGainByChannelName(device, gains, FrontLeft,   ingain * (FL + 0.7071f*FC + 0.7071f*SL + 0.7071f*BL));
+        SetGainByChannelName(device, gains, FrontRight,  ingain * (FR + 0.7071f*FC + 0.7071f*SR + 0.7071f*BR));
+        break;
+    case DevFmtQuad:
+        SetGainByChannelName(device, gains, FrontLeft,   ingain * (FL + 0.7071f*FC + 0.382824749f*SL));
+        SetGainByChannelName(device, gains, FrontRight,  ingain * (FR + 0.7071f*FC + 0.382824749f*SL));
+        SetGainByChannelName(device, gains, BackLeft,    ingain * (0.923634171f*SL + BL));
+        SetGainByChannelName(device, gains, BackRight,   ingain * (0.923634171f*SR + BR));
+        break;
+    case DevFmtX51:
+        SetGainByChannelName(device, gains, FrontLeft,   ingain * FL);
+        SetGainByChannelName(device, gains, FrontRight,  ingain * FR);
+        SetGainByChannelName(device, gains, FrontCenter, ingain * FC);
+        SetGainByChannelName(device, gains, LFE,         ingain * Lfe);
+        SetGainByChannelName(device, gains, SideLeft,    ingain * (SL + 0.866602540f*BL + 0.5f*BR));
+        SetGainByChannelName(device, gains, SideRight,   ingain * (SR + 0.866602540f*BR + 0.5f*BL));
+        break;
+    case DevFmtX51Rear:
+        SetGainByChannelName(device, gains, FrontLeft,   ingain * (FL + 0.382824749f*SL));
+        SetGainByChannelName(device, gains, FrontRight,  ingain * (FR + 0.382824749f*SR));
+        SetGainByChannelName(device, gains, FrontCenter, ingain * FC);
+        SetGainByChannelName(device, gains, LFE,         ingain * Lfe);
+        SetGainByChannelName(device, gains, BackLeft,    ingain * (0.923634171f*SL + 0.900533736f*BL + 0.434010267f*BR));
+        SetGainByChannelName(device, gains, BackRight,   ingain * (0.923634171f*SR + 0.900533736f*BR + 0.434010267f*BL));
+        break;
+    case DevFmtX61:
+        SetGainByChannelName(device, gains, FrontLeft,   ingain * FL);
+        SetGainByChannelName(device, gains, FrontRight,  ingain * FR);
+        SetGainByChannelName(device, gains, FrontCenter, ingain * FC);
+        SetGainByChannelName(device, gains, LFE,         ingain * Lfe);
+        SetGainByChannelName(device, gains, SideLeft,    ingain * SL);
+        SetGainByChannelName(device, gains, SideRight,   ingain * SR);
+        SetGainByChannelName(device, gains, BackCenter,  ingain * (0.7071f*BL + 0.7071f*BR));
+        break;
+    case DevFmtX71:
+        SetGainByChannelName(device, gains, FrontLeft,   ingain * FL);
+        SetGainByChannelName(device, gains, FrontRight,  ingain * FR);
+        SetGainByChannelName(device, gains, FrontCenter, ingain * FC);
+        SetGainByChannelName(device, gains, LFE,         ingain * Lfe);
+        SetGainByChannelName(device, gains, SideLeft,    ingain * SL);
+        SetGainByChannelName(device, gains, SideRight,   ingain * SR);
+        SetGainByChannelName(device, gains, BackLeft,    ingain * BL);
+        SetGainByChannelName(device, gains, BackRight,   ingain * BR);
+        break;
+    case DevFmtBFormat3D:
+    default:
+        ERR("Internal error, unsupported device layout");
+        break;
+    }
+}
+
 
 DECL_CONST static inline const char *GetLabelFromChannel(enum Channel channel)
 {

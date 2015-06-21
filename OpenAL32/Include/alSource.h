@@ -63,7 +63,6 @@ typedef struct ALsource {
     volatile ALboolean HeadRelative;
     volatile ALboolean Looping;
     volatile enum DistanceModel DistanceModel;
-    volatile ALboolean DirectChannels;
 
     volatile ALboolean DryGainHFAuto;
     volatile ALboolean WetGainAuto;
@@ -75,6 +74,10 @@ typedef struct ALsource {
     volatile ALfloat DopplerFactor;
 
     volatile ALfloat Radius;
+
+    volatile ALboolean DirectChannels;
+    volatile ALuint DirectMixMatrixNumInputChannels;
+    ALfloat DirectMixMatrix[MAX_INPUT_CHANNELS][8];
 
     /**
      * Last user-specified offset, and the offset type (bytes, samples, or

@@ -92,6 +92,8 @@ typedef enum SourceProp {
 #endif
     /* AL_SOFT_direct_channels */
     srcDirectChannelsSOFT = AL_DIRECT_CHANNELS_SOFT,
+    srcDirectMatrixChannelsSOFT = AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT,
+    srcDirectMatrixValuesSOFT = AL_DIRECT_MATRIX71_VALUES_SOFT,
 
     /* AL_EXT_source_distance_model */
     srcDistanceModel = AL_DISTANCE_MODEL,
@@ -149,6 +151,7 @@ static ALint FloatValsByProp(ALenum prop)
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO:
         case AL_DIRECT_CHANNELS_SOFT:
+        case AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT:
         case AL_DISTANCE_MODEL:
         case AL_SOURCE_RELATIVE:
         case AL_LOOPING:
@@ -177,6 +180,9 @@ static ALint FloatValsByProp(ALenum prop)
 
         case AL_ORIENTATION:
             return 6;
+
+        case AL_DIRECT_MATRIX71_VALUES_SOFT:
+            return MAX_INPUT_CHANNELS*8;    /* can be less */
 
         case AL_SEC_OFFSET_LATENCY_SOFT:
             break; /* Double only */
@@ -217,6 +223,7 @@ static ALint DoubleValsByProp(ALenum prop)
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO:
         case AL_DIRECT_CHANNELS_SOFT:
+        case AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT:
         case AL_DISTANCE_MODEL:
         case AL_SOURCE_RELATIVE:
         case AL_LOOPING:
@@ -246,6 +253,9 @@ static ALint DoubleValsByProp(ALenum prop)
 
         case AL_ORIENTATION:
             return 6;
+
+        case AL_DIRECT_MATRIX71_VALUES_SOFT:
+            return MAX_INPUT_CHANNELS*8;    /* can be less */
 
         case AL_BUFFER:
         case AL_DIRECT_FILTER:
@@ -284,6 +294,7 @@ static ALint IntValsByProp(ALenum prop)
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO:
         case AL_DIRECT_CHANNELS_SOFT:
+        case AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT:
         case AL_DISTANCE_MODEL:
         case AL_SOURCE_RELATIVE:
         case AL_LOOPING:
@@ -320,6 +331,8 @@ static ALint IntValsByProp(ALenum prop)
             break; /* i64 only */
         case AL_SEC_OFFSET_LATENCY_SOFT:
             break; /* Double only */
+        case AL_DIRECT_MATRIX71_VALUES_SOFT:
+            break;  /* Float only - anyway, the extension should use a new entry point */
     }
     return 0;
 }
@@ -350,6 +363,7 @@ static ALint Int64ValsByProp(ALenum prop)
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO:
         case AL_DIRECT_CHANNELS_SOFT:
+        case AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT:
         case AL_DISTANCE_MODEL:
         case AL_SOURCE_RELATIVE:
         case AL_LOOPING:
@@ -385,6 +399,8 @@ static ALint Int64ValsByProp(ALenum prop)
 
         case AL_SEC_OFFSET_LATENCY_SOFT:
             break; /* Double only */
+        case AL_DIRECT_MATRIX71_VALUES_SOFT:
+            break;  /* Float only - anyway, the extension should use a new entry point */
     }
     return 0;
 }
@@ -587,7 +603,26 @@ static ALboolean SetSourcefv(ALsource *Source, ALCcontext *Context, SourceProp p
             ATOMIC_STORE(&Source->NeedsUpdate, AL_TRUE);
             return AL_TRUE;
 
+        case AL_DIRECT_MATRIX71_VALUES_SOFT:
+        {
+            ALuint i,j;
+            ALuint InputChannels = Source->DirectMixMatrixNumInputChannels;
+            if (InputChannels == 0)
+                SET_ERROR_AND_RETURN_VALUE(Context, AL_INVALID_OPERATION, AL_FALSE);
 
+            for (i=0; i<InputChannels; i++)
+                for (j=0; j<8; j++)
+                    CHECKVAL(isfinite(values[i*8+j]));
+
+            LockContext(Context);
+            for (i=0; i<InputChannels; i++)
+                for (j=0; j<8; j++)
+                    Source->DirectMixMatrix[i][j] = values[i*8+j];
+            UnlockContext(Context);
+            ATOMIC_STORE(&Source->NeedsUpdate, AL_TRUE);
+            return AL_TRUE;
+        }
+		
         case AL_SOURCE_RELATIVE:
         case AL_LOOPING:
         case AL_SOURCE_STATE:
@@ -597,6 +632,7 @@ static ALboolean SetSourcefv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO:
         case AL_DIRECT_CHANNELS_SOFT:
+        case AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT:
             ival = (ALint)values[0];
             return SetSourceiv(Source, Context, prop, &ival);
 
@@ -780,6 +816,13 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
             ATOMIC_STORE(&Source->NeedsUpdate, AL_TRUE);
             return AL_TRUE;
 
+        case AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT:
+            CHECKVAL(*values >= 0 || *values <= MAX_INPUT_CHANNELS);
+
+            Source->DirectMixMatrixNumInputChannels = *values;
+            ATOMIC_STORE(&Source->NeedsUpdate, AL_TRUE);
+            return AL_TRUE;
+
         case AL_DISTANCE_MODEL:
             CHECKVAL(*values == AL_NONE ||
                      *values == AL_INVERSE_DISTANCE ||
@@ -875,6 +918,9 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_SAMPLE_OFFSET_LATENCY_SOFT:
         case AL_SEC_OFFSET_LATENCY_SOFT:
             break;
+
+        case AL_DIRECT_MATRIX71_VALUES_SOFT:
+            break;
     }
 
     ERR("Unexpected property: 0x%04x\n", prop);
@@ -914,6 +960,7 @@ static ALboolean SetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO:
         case AL_DIRECT_CHANNELS_SOFT:
+        case AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT:
         case AL_DISTANCE_MODEL:
             CHECKVAL(*values <= INT_MAX && *values >= INT_MIN);
 
@@ -981,6 +1028,10 @@ static ALboolean SetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
 
         case AL_SEC_OFFSET_LATENCY_SOFT:
             break;
+
+        case AL_DIRECT_MATRIX71_VALUES_SOFT:
+            break;
+
     }
 
     ERR("Unexpected property: 0x%04x\n", prop);
@@ -1149,6 +1200,21 @@ static ALboolean GetSourcedv(ALsource *Source, ALCcontext *Context, SourceProp p
             UnlockContext(Context);
             return AL_TRUE;
 
+        case AL_DIRECT_MATRIX71_VALUES_SOFT:
+        {
+            ALuint i,j;
+            ALuint InputChannels = Source->DirectMixMatrixNumInputChannels;
+            if (InputChannels == 0)
+                SET_ERROR_AND_RETURN_VALUE(Context, AL_INVALID_OPERATION, AL_FALSE);
+
+            LockContext(Context);
+            for (i=0; i<InputChannels; i++)
+                for (j=0; j<8; j++)
+                    values[i*8+j] = Source->DirectMixMatrix[i][j];
+            UnlockContext(Context);
+            return AL_TRUE;
+        }
+
         /* 1x int */
         case AL_SOURCE_RELATIVE:
         case AL_LOOPING:
@@ -1160,6 +1226,7 @@ static ALboolean GetSourcedv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO:
         case AL_DIRECT_CHANNELS_SOFT:
+        case AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT:
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_DISTANCE_MODEL:
@@ -1319,6 +1386,10 @@ static ALboolean GetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
             *values = Source->DirectChannels;
             return AL_TRUE;
 
+        case AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT:
+            *values = Source->DirectMixMatrixNumInputChannels;
+              return AL_TRUE;
+
         case AL_DISTANCE_MODEL:
             *values = Source->DistanceModel;
             return AL_TRUE;
@@ -1394,6 +1465,9 @@ static ALboolean GetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_DIRECT_FILTER:
         case AL_AUXILIARY_SEND_FILTER:
             break; /* ??? */
+        case AL_DIRECT_MATRIX71_VALUES_SOFT:
+            break;
+
     }
 
     ERR("Unexpected property: 0x%04x\n", prop);
@@ -1492,6 +1566,7 @@ static ALboolean GetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
         case AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO:
         case AL_DIRECT_CHANNELS_SOFT:
+        case AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT:
         case AL_DISTANCE_MODEL:
             if((err=GetSourceiv(Source, Context, prop, ivals)) != AL_FALSE)
                 *values = ivals[0];
@@ -1516,6 +1591,9 @@ static ALboolean GetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
 
         case AL_SEC_OFFSET_LATENCY_SOFT:
             break; /* Double only */
+
+        case AL_DIRECT_MATRIX71_VALUES_SOFT:
+            break;
     }
 
     ERR("Unexpected property: 0x%04x\n", prop);
@@ -2601,6 +2679,8 @@ static ALvoid InitSourceParams(ALsource *Source)
     Source->RoomRolloffFactor = 0.0f;
     Source->DopplerFactor = 1.0f;
     Source->DirectChannels = AL_FALSE;
+    Source->DirectMixMatrixNumInputChannels = 0;
+    memset(Source->DirectMixMatrix, 0, sizeof(Source->DirectMixMatrix));
 
     Source->Radius = 0.0f;
 

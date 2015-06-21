@@ -484,6 +484,7 @@ ALvoid CalcNonAttnSourceParams(ALvoice *voice, const ALsource *ALSource, const A
     const struct ChanMap *chans = NULL;
     ALuint num_channels = 0;
     ALboolean DirectChannels;
+    ALuint DirectMatrixChannels;
     ALboolean isbformat = AL_FALSE;
     ALfloat Pitch;
     ALuint i, j, c;
@@ -502,6 +503,7 @@ ALvoid CalcNonAttnSourceParams(ALvoice *voice, const ALsource *ALSource, const A
     Pitch           = ALSource->Pitch;
     Relative        = ALSource->HeadRelative;
     DirectChannels  = ALSource->DirectChannels;
+    DirectMatrixChannels  = ALSource->DirectMixMatrixNumInputChannels;
 
     voice->Direct.OutBuffer = Device->DryBuffer;
     voice->Direct.OutChannels = Device->NumChannels;
@@ -672,7 +674,33 @@ ALvoid CalcNonAttnSourceParams(ALvoice *voice, const ALsource *ALSource, const A
     {
         if(DirectChannels)
         {
-            if(Device->Hrtf)
+            if (DirectMatrixChannels > 0)
+            {
+                if(Device->Hrtf)
+                {
+                    voice->Direct.OutBuffer += voice->Direct.OutChannels;
+                    voice->Direct.OutChannels = 2;
+                }
+   
+                for(c = 0;c < num_channels;c++)
+                {
+                    MixGains *gains = voice->Direct.Gains[c];
+                    ALfloat Target[MAX_OUTPUT_CHANNELS];
+   
+                    if (c >= DirectMatrixChannels)
+                    {
+                        for(i = 0;i < MAX_OUTPUT_CHANNELS;i++)
+                            gains[i].Target = 0.f;
+                    }
+                    else
+                    {
+                        ComputeDirect71DownmixGains(Device, ALSource->DirectMixMatrix[c], DryGain, Target);
+                        for(i = 0;i < MAX_OUTPUT_CHANNELS;i++)
+                            gains[i].Target = Target[i];
+                    }
+                }
+            }
+            else if(Device->Hrtf)
             {
                 /* DirectChannels with HRTF enabled. Skip the virtual channels
                  * and write FrontLeft and FrontRight inputs to the first and

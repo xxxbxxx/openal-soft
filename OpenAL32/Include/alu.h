@@ -308,6 +308,13 @@ void ComputeAmbientGains(const ALCdevice *device, ALfloat ingain, ALfloat gains[
  */
 void ComputeBFormatGains(const ALCdevice *device, const ALfloat mtx[4], ALfloat ingain, ALfloat gains[MAX_OUTPUT_CHANNELS]);
 
+/**
+ * ComputeDirect71DownmixGains
+ *
+ * Sets channel gains for a 7.1 mix matrix downmixed to the actual device channels.
+ * This is using dolby like rules, folding the missing speakers to existing ones.
+ */
+void ComputeDirect71DownmixGains(const ALCdevice *device, const ALfloat channelmatrix[8], ALfloat ingain, ALfloat gains[MAX_OUTPUT_CHANNELS]);
 
 ALvoid UpdateContextSources(ALCcontext *context);
 

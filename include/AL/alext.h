@@ -272,6 +272,18 @@ AL_API ALboolean AL_APIENTRY alIsBufferFormatSupportedSOFT(ALenum format);
 #define AL_DIRECT_CHANNELS_SOFT                  0x1033
 #endif
 
+#ifndef AL_SOFT_direct_channels_matrix71
+#define AL_SOFT_direct_channels_matrix71 1
+/* Instead of using direct mapping, provide a mix matrix to map the source channels to a 7.1 speaker array,
+ * which is then downmixed to actual speaker array using dolby-like rules.
+ * use AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT to the set number of inputs channels in the matrix,
+ *           or 0 to disable and fallback to direct 1-1 mapping.
+ * and then SetSourcefv(AL_DIRECT_CHANNELS_71MATRIX_SOFT, ...) to provide (inputs * 8) gain values. (order: FL, FR, FC, lfe, SL, SR, BL, BR)
+*/
+#define AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT   0x1034
+#define AL_DIRECT_MATRIX71_VALUES_SOFT           0x1035
+#endif
+
 #ifndef ALC_SOFT_loopback
 #define ALC_SOFT_loopback 1
 #define ALC_FORMAT_CHANNELS_SOFT                 0x1990
