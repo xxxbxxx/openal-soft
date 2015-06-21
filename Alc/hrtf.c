@@ -106,11 +106,19 @@ static void CalcAzIndices(ALuint azcount, ALfloat az, ALuint *azidx, ALfloat *az
  * increase the apparent resolution of the HRIR data set.  The coefficients
  * are also normalized and attenuated by the specified gain.
  */
-void GetLerpedHrtfCoeffs(const struct Hrtf *Hrtf, ALfloat elevation, ALfloat azimuth, ALfloat dirfact, ALfloat gain, ALfloat (*coeffs)[2], ALuint *delays)
+void GetLerpedHrtfCoeffs(const struct Hrtf *Hrtf, ALfloat elevation, ALfloat azimuth, ALfloat spread, ALfloat gain, ALfloat (*coeffs)[2], ALuint *delays)
 {
     ALuint evidx[2], lidx[4], ridx[4];
     ALfloat mu[3], blend[4];
     ALuint i;
+    ALfloat dirfact;
+
+    /* hack: implement the spread by blending from omni to directional.
+             maybe it's possible to do better? */
+    if (spread < 0)
+        dirfact = 1.f;    /* directional */
+    else
+        dirfact = 1.f-(spread/F_TAU);
 
     /* Claculate elevation indices and interpolation factor. */
     CalcEvIndices(Hrtf->evCount, elevation, evidx, &mu[2]);
@@ -198,13 +206,22 @@ void GetLerpedHrtfCoeffs(const struct Hrtf *Hrtf, ALfloat elevation, ALfloat azi
  * specified gain.  Stepping resolution and count is determined using the
  * given delta factor between 0.0 and 1.0.
  */
-ALuint GetMovingHrtfCoeffs(const struct Hrtf *Hrtf, ALfloat elevation, ALfloat azimuth, ALfloat dirfact, ALfloat gain, ALfloat delta, ALint counter, ALfloat (*coeffs)[2], ALuint *delays, ALfloat (*coeffStep)[2], ALint *delayStep)
+ALuint GetMovingHrtfCoeffs(const struct Hrtf *Hrtf, ALfloat elevation, ALfloat azimuth, ALfloat spread, ALfloat gain, ALfloat delta, ALint counter, ALfloat (*coeffs)[2], ALuint *delays, ALfloat (*coeffStep)[2], ALint *delayStep)
 {
     ALuint evidx[2], lidx[4], ridx[4];
     ALfloat mu[3], blend[4];
     ALfloat left, right;
     ALfloat steps;
     ALuint i;
+    ALfloat dirfact;
+
+    /* hack: implement the spread by blending from omni to directional.
+             maybe it's possible to do better? */
+    if (spread < 0)
+        dirfact = 1.f;    /* directional */
+    else
+        dirfact = 1.f-(spread/F_TAU);
+
 
     /* Claculate elevation indices and interpolation factor. */
     CalcEvIndices(Hrtf->evCount, elevation, evidx, &mu[2]);

@@ -70,7 +70,7 @@ static ALvoid ALdedicatedState_update(ALdedicatedState *state, ALCdevice *device
         else
         {
             static const ALfloat front_dir[3] = { 0.0f, 0.0f, -1.0f };
-            ComputeDirectionalGains(device, front_dir, Gain, state->gains);
+            ComputeDirectionalGains(device, front_dir, -1.f, Gain, state->gains);
         }
     }
 }

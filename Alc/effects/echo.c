@@ -103,12 +103,12 @@ static ALvoid ALechoState_update(ALechoState *state, ALCdevice *Device, const AL
     gain = Slot->Gain;
 
     /* First tap panning */
-    pandir[0] = -lrpan;
-    ComputeDirectionalGains(Device, pandir, gain, state->Gain[0]);
+    pandir[0] = -lrpan;		/* TODO: normalize / check the echo spec. maybe lrpan should be used as gain instead? */
+    ComputeDirectionalGains(Device, pandir, -1.f, gain, state->Gain[0]);
 
     /* Second tap panning */
-    pandir[0] = +lrpan;
-    ComputeDirectionalGains(Device, pandir, gain, state->Gain[1]);
+    pandir[0] = +lrpan;		/* TODO: normalize */
+    ComputeDirectionalGains(Device, pandir, -1.f, gain, state->Gain[1]);
 }
 
 static ALvoid ALechoState_process(ALechoState *state, ALuint SamplesToDo, const ALfloat *restrict SamplesIn, ALfloat (*restrict SamplesOut)[BUFFERSIZE], ALuint NumChannels)

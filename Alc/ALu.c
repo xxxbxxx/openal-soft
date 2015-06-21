@@ -733,7 +733,7 @@ ALvoid CalcNonAttnSourceParams(ALvoice *voice, const ALsource *ALSource, const A
                     /* Get the static HRIR coefficients and delays for this
                      * channel. */
                     GetLerpedHrtfCoeffs(Device->Hrtf,
-                        chans[c].elevation, chans[c].angle, 1.0f, DryGain,
+                        chans[c].elevation, chans[c].angle, -1.f, DryGain,
                         voice->Direct.Hrtf[c].Params.Coeffs,
                         voice->Direct.Hrtf[c].Params.Delay
                     );
@@ -1155,7 +1155,7 @@ ALvoid CalcSourceParams(ALvoice *voice, const ALsource *ALSource, const ALCconte
         aluVector dir = {{ 0.0f, 0.0f, -1.0f, 0.0f }};
         ALfloat ev = 0.0f, az = 0.0f;
         ALfloat radius = ALSource->Radius;
-        ALfloat dirfact = 1.0f;
+        ALfloat spread = -1.f;    /* default to directional source. */
 
         voice->Direct.OutBuffer += voice->Direct.OutChannels;
         voice->Direct.OutChannels = 2;
@@ -1172,13 +1172,11 @@ ALvoid CalcSourceParams(ALvoice *voice, const ALsource *ALSource, const ALCconte
              * cause it to land outside of -1..+1. */
             ev = asinf(clampf(dir.v[1], -1.0f, 1.0f));
             az = atan2f(dir.v[0], -dir.v[2]);
-        }
-        if(radius > 0.0f)
-        {
+
             if(radius >= Distance)
-                dirfact *= Distance / radius * 0.5f;
+                spread = lerp(F_TAU, F_PI, Distance / radius);
             else
-                dirfact *= 1.0f - (asinf(radius / Distance) / F_PI);
+                spread = 2.0f*asinf(radius / Distance);
         }
 
         /* Check to see if the HRIR is already moving. */
@@ -1193,7 +1191,7 @@ ALvoid CalcSourceParams(ALvoice *voice, const ALsource *ALSource, const ALCconte
             if(delta > 0.000015f)
             {
                 ALuint counter = GetMovingHrtfCoeffs(Device->Hrtf,
-                    ev, az, dirfact, DryGain, delta, voice->Direct.Counter,
+                    ev, az, spread, DryGain, delta, voice->Direct.Counter,
                     voice->Direct.Hrtf[0].Params.Coeffs, voice->Direct.Hrtf[0].Params.Delay,
                     voice->Direct.Hrtf[0].Params.CoeffStep, voice->Direct.Hrtf[0].Params.DelayStep
                 );
@@ -1205,7 +1203,7 @@ ALvoid CalcSourceParams(ALvoice *voice, const ALsource *ALSource, const ALCconte
         else
         {
             /* Get the initial (static) HRIR coefficients and delays. */
-            GetLerpedHrtfCoeffs(Device->Hrtf, ev, az, dirfact, DryGain,
+            GetLerpedHrtfCoeffs(Device->Hrtf, ev, az, spread, DryGain,
                                 voice->Direct.Hrtf[0].Params.Coeffs,
                                 voice->Direct.Hrtf[0].Params.Delay);
             voice->Direct.Counter = 0;
@@ -1223,6 +1221,7 @@ ALvoid CalcSourceParams(ALvoice *voice, const ALsource *ALSource, const ALCconte
         ALfloat dir[3] = { 0.0f, 0.0f, -1.0f };
         ALfloat radius = ALSource->Radius;
         ALfloat Target[MAX_OUTPUT_CHANNELS];
+        ALfloat spread = -1.f;    /* default to directional source. */
 
         /* Get the localized direction, and compute panned gains. */
         if(Distance > FLT_EPSILON)
@@ -1230,19 +1229,13 @@ ALvoid CalcSourceParams(ALvoice *voice, const ALsource *ALSource, const ALCconte
             dir[0] = -SourceToListener.v[0];
             dir[1] = -SourceToListener.v[1];
             dir[2] = -SourceToListener.v[2] * ZScale;
-        }
-        if(radius > 0.0f)
-        {
-            ALfloat dirfact;
+
             if(radius >= Distance)
-                dirfact = Distance / radius * 0.5f;
+                spread = lerp(F_TAU, F_PI, Distance / radius);
             else
-                dirfact = 1.0f - (asinf(radius / Distance) / F_PI);
-            dir[0] *= dirfact;
-            dir[1] *= dirfact;
-            dir[2] *= dirfact;
+                spread = 2.0f*asinf(radius / Distance);
         }
-        ComputeDirectionalGains(Device, dir, DryGain, Target);
+        ComputeDirectionalGains(Device, dir, spread, DryGain, Target);
 
         for(j = 0;j < MAX_OUTPUT_CHANNELS;j++)
             gains[j].Target = Target[j];

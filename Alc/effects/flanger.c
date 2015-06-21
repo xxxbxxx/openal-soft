@@ -113,8 +113,8 @@ static ALvoid ALflangerState_update(ALflangerState *state, ALCdevice *Device, co
     state->delay = fastf2i(Slot->EffectProps.Flanger.Delay * frequency);
 
     /* Gains for left and right sides */
-    ComputeDirectionalGains(Device, left_dir, Slot->Gain, state->Gain[0]);
-    ComputeDirectionalGains(Device, right_dir, Slot->Gain, state->Gain[1]);
+    ComputeDirectionalGains(Device, left_dir, -1.f, Slot->Gain, state->Gain[0]);
+    ComputeDirectionalGains(Device, right_dir, -1.f, Slot->Gain, state->Gain[1]);
 
     phase = Slot->EffectProps.Flanger.Phase;
     rate = Slot->EffectProps.Flanger.Rate;

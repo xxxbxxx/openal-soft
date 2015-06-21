@@ -282,7 +282,7 @@ ALvoid aluInitPanning(ALCdevice *Device);
  * Sets channel gains based on a direction. The direction must be a 3-component
  * vector no longer than 1 unit.
  */
-void ComputeDirectionalGains(const ALCdevice *device, const ALfloat dir[3], ALfloat ingain, ALfloat gains[MAX_OUTPUT_CHANNELS]);
+void ComputeDirectionalGains(const ALCdevice *device, const ALfloat dir[3], ALfloat spread, ALfloat ingain, ALfloat gains[MAX_OUTPUT_CHANNELS]);
 
 /**
  * ComputeAngleGains

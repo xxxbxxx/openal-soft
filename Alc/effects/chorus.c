@@ -113,8 +113,8 @@ static ALvoid ALchorusState_update(ALchorusState *state, ALCdevice *Device, cons
     state->delay = fastf2i(Slot->EffectProps.Chorus.Delay * frequency);
 
     /* Gains for left and right sides */
-    ComputeDirectionalGains(Device, left_dir, Slot->Gain, state->Gain[0]);
-    ComputeDirectionalGains(Device, right_dir, Slot->Gain, state->Gain[1]);
+    ComputeDirectionalGains(Device, left_dir, -1.f, Slot->Gain, state->Gain[0]);
+    ComputeDirectionalGains(Device, right_dir, -1.f, Slot->Gain, state->Gain[1]);
 
     phase = Slot->EffectProps.Chorus.Phase;
     rate = Slot->EffectProps.Chorus.Rate;

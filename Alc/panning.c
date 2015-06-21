@@ -104,15 +104,15 @@ void ComputeAngleGains(const ALCdevice *device, ALfloat angle, ALfloat elevation
         sinf(elevation),
         -cosf(angle) * cosf(elevation)
     };
-    ComputeDirectionalGains(device, dir, ingain, gains);
+    ComputeDirectionalGains(device, dir, -1, ingain, gains);
 }
 
-void ComputeDirectionalGains(const ALCdevice *device, const ALfloat dir[3], ALfloat ingain, ALfloat gains[MAX_OUTPUT_CHANNELS])
+void ComputeDirectionalGains(const ALCdevice *device, const ALfloat dir[3], ALfloat spread, ALfloat ingain, ALfloat gains[MAX_OUTPUT_CHANNELS])
 {
     ALfloat coeffs[MAX_AMBI_COEFFS];
     ALuint i, j;
     /* Convert from OpenAL coords to Ambisonics.
-    * dir must be normalized, otherwise loudness changes. */
+     * dir must be normalized, otherwise loudness changes. */
     ALfloat x = -dir[2];
     ALfloat y = -dir[0];
     ALfloat z =  dir[1];
@@ -121,6 +121,7 @@ void ComputeDirectionalGains(const ALCdevice *device, const ALfloat dir[3], ALfl
      *        only the zeroth-order component is used, so we need to compensate for lost loudness. */
     ALfloat omniratio = device->AmbiElevationtoOmni * fabsf(z);
  
+    /* see http://ambisonics.ch/standards/channels/  for channels ordering and normalisation. */
     /* Zeroth-order */
     coeffs[0]  = 1.0f; /* ACN 0 = 1 */
     /* First-order */
@@ -141,6 +142,52 @@ void ComputeDirectionalGains(const ALCdevice *device, const ALfloat dir[3], ALfl
     coeffs[13] =  1.620185175f * x * (5.0f*z*z - 1.0f); /* ACN 13 = sqrt(21/8) * X * (5*Z*Z - 1) */
     coeffs[14] =  5.123475383f * z * (x*x - y*y);       /* ACN 14 = sqrt(105)/2 * Z * (X*X - Y*Y) */
     coeffs[15] =  2.091650066f * x * (x*x - 3.0f*y*y);  /* ACN 15 = sqrt(35/8) * X * (X*X - 3*Y*Y) */
+
+    if (spread < 0) {
+        /* directional source. */
+
+    } else {
+        /* Implement the spread by using a spherical source that subtends the angle spread.
+         *  see http://www.ppsloan.org/publications/StupidSH36.pdf - Appendix A3
+         * The gain of the source is compensated for size, so that the loundness doesn't depend on the spread.
+         *
+         * ZH0 = (-sqrt_pi * (-1.f + ca));
+         * ZH1 = ( 0.5f*sqrtf(3.f)*sqrt_pi * sa*sa);
+         * ZH2 = (-0.5f*sqrtf(5.f)*sqrt_pi * ca*(-1.f+ca)*(ca+1.f));
+         * ZH3 = (-0.125f*sqrtf(7.f)*sqrt_pi * (-1.f+ca)*(ca+1.f)*(5.f*ca*ca-1.f));
+         * solidangle = 2.f*F_PI*(1.f-ca)
+         * size_normalisation_coef = 1.f/ZH0;
+         */
+
+        ALfloat a = .5f*spread;
+        ALfloat ca = cosf(a);
+
+        ALfloat ZH0_norm = 1.f;
+        ALfloat ZH1_norm = 0.8660f * (ca+1.f);
+        ALfloat ZH2_norm = 1.1180f * (ca+1.f)*ca;
+        ALfloat ZH3_norm = 0.3307f * (ca+1.f)*(5.f*ca*ca-1.f);
+
+        /* spread > pi => blend to ambient gain for a more perceptual average volume */
+        if (ca < 0)
+            omniratio = maxf(-ca, omniratio);
+
+        coeffs[0]  *= ZH0_norm;
+        coeffs[1]  *= ZH1_norm;
+        coeffs[2]  *= ZH1_norm;
+        coeffs[3]  *= ZH1_norm;
+        coeffs[4]  *= ZH2_norm;
+        coeffs[5]  *= ZH2_norm;
+        coeffs[6]  *= ZH2_norm;
+        coeffs[7]  *= ZH2_norm;
+        coeffs[8]  *= ZH2_norm;
+        coeffs[9]  *= ZH3_norm;
+        coeffs[10] *= ZH3_norm;
+        coeffs[11] *= ZH3_norm;
+        coeffs[12] *= ZH3_norm;
+        coeffs[13] *= ZH3_norm;
+        coeffs[14] *= ZH3_norm;
+        coeffs[15] *= ZH3_norm;
+    }
 
     for(i = 0;i < device->NumChannels;i++)
     {
