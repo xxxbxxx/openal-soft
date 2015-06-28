@@ -407,6 +407,7 @@ static const ALCenums enumeration[] = {
     DECL(AL_DIRECT_CHANNELS_SOFT),
     DECL(AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT),
     DECL(AL_DIRECT_MATRIX71_VALUES_SOFT),
+    DECL(AL_DIRECT_LFE_SEND_SOFT),
 
 
     DECL(AL_DIRECT_FILTER),
@@ -725,7 +726,7 @@ static const ALchar alExtList[] =
 #ifdef WITH_EXT_SOURCE_RADIUS
 	"AL_EXT_SOURCE_RADIUS "
 #endif
-    "AL_SOFT_direct_channels AL_SOFT_direct_channels_matrix71 "
+    "AL_SOFT_direct_channels AL_SOFT_direct_channels_matrix71 AL_SOFT_direct_lfe_send "
     "AL_SOFT_loop_points AL_SOFT_MSADPCM "
     "AL_SOFT_source_latency AL_SOFT_source_length";
 

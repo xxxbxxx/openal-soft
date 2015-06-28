@@ -90,6 +90,10 @@ typedef enum SourceProp {
     /* AL_EXT_SOURCE_RADIUS */
     srcSourceRadius = AL_SOURCE_RADIUS,
 #endif
+
+    /* AL_SOFT_direct_lfe_send */
+    srcSourceLfeSend = AL_DIRECT_LFE_SEND_SOFT,
+
     /* AL_SOFT_direct_channels */
     srcDirectChannelsSOFT = AL_DIRECT_CHANNELS_SOFT,
     srcDirectMatrixChannelsSOFT = AL_DIRECT_MATRIX71_SOURCECHANNELS_SOFT,
@@ -162,6 +166,7 @@ static ALint FloatValsByProp(ALenum prop)
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_SEC_LENGTH_SOFT:
+        case AL_DIRECT_LFE_SEND_SOFT:
 #ifdef WITH_EXT_SOURCE_RADIUS
         case AL_SOURCE_RADIUS:
 #endif
@@ -234,6 +239,7 @@ static ALint DoubleValsByProp(ALenum prop)
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_SEC_LENGTH_SOFT:
+        case AL_DIRECT_LFE_SEND_SOFT:
 #ifdef WITH_EXT_SOURCE_RADIUS
         case AL_SOURCE_RADIUS:
 #endif
@@ -307,6 +313,7 @@ static ALint IntValsByProp(ALenum prop)
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_SEC_LENGTH_SOFT:
+        case AL_DIRECT_LFE_SEND_SOFT:
 #ifdef WITH_EXT_SOURCE_RADIUS
         case AL_SOURCE_RADIUS:
 #endif
@@ -376,6 +383,7 @@ static ALint Int64ValsByProp(ALenum prop)
         case AL_BYTE_LENGTH_SOFT:
         case AL_SAMPLE_LENGTH_SOFT:
         case AL_SEC_LENGTH_SOFT:
+        case AL_DIRECT_LFE_SEND_SOFT:
 #ifdef WITH_EXT_SOURCE_RADIUS
         case AL_SOURCE_RADIUS:
 #endif
@@ -526,6 +534,12 @@ static ALboolean SetSourcefv(ALsource *Source, ALCcontext *Context, SourceProp p
             ATOMIC_STORE(&Source->NeedsUpdate, AL_TRUE);
             return AL_TRUE;
 
+        case AL_DIRECT_LFE_SEND_SOFT:
+            CHECKVAL(*values >= 0.0f);
+
+            Source->DirectLfeSend = *values;
+            ATOMIC_STORE(&Source->NeedsUpdate, AL_TRUE);
+            return AL_TRUE;
 
 #ifdef WITH_EXT_SOURCE_RADIUS
         case AL_SOURCE_RADIUS:
@@ -890,6 +904,7 @@ static ALboolean SetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_CONE_OUTER_GAINHF:
         case AL_AIR_ABSORPTION_FACTOR:
         case AL_ROOM_ROLLOFF_FACTOR:
+        case AL_DIRECT_LFE_SEND_SOFT:
 #ifdef WITH_EXT_SOURCE_RADIUS
         case AL_SOURCE_RADIUS:
 #endif
@@ -1001,6 +1016,7 @@ static ALboolean SetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
         case AL_CONE_OUTER_GAINHF:
         case AL_AIR_ABSORPTION_FACTOR:
         case AL_ROOM_ROLLOFF_FACTOR:
+        case AL_DIRECT_LFE_SEND_SOFT:
 #ifdef WITH_EXT_SOURCE_RADIUS
         case AL_SOURCE_RADIUS:
 #endif
@@ -1119,6 +1135,9 @@ static ALboolean GetSourcedv(ALsource *Source, ALCcontext *Context, SourceProp p
             *values = Source->DopplerFactor;
             return AL_TRUE;
 
+        case AL_DIRECT_LFE_SEND_SOFT:
+            *values = Source->DirectLfeSend;
+            return AL_TRUE;
 
 #ifdef WITH_EXT_SOURCE_RADIUS
         case AL_SOURCE_RADIUS:
@@ -1413,6 +1432,7 @@ static ALboolean GetSourceiv(ALsource *Source, ALCcontext *Context, SourceProp p
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_CONE_OUTER_GAINHF:
         case AL_SEC_LENGTH_SOFT:
+        case AL_DIRECT_LFE_SEND_SOFT:
 #ifdef WITH_EXT_SOURCE_RADIUS
         case AL_SOURCE_RADIUS:
 #endif
@@ -1509,6 +1529,7 @@ static ALboolean GetSourcei64v(ALsource *Source, ALCcontext *Context, SourceProp
         case AL_ROOM_ROLLOFF_FACTOR:
         case AL_CONE_OUTER_GAINHF:
         case AL_SEC_LENGTH_SOFT:
+        case AL_DIRECT_LFE_SEND_SOFT:
 #ifdef WITH_EXT_SOURCE_RADIUS
         case AL_SOURCE_RADIUS:
 #endif
@@ -2683,6 +2704,7 @@ static ALvoid InitSourceParams(ALsource *Source)
     memset(Source->DirectMixMatrix, 0, sizeof(Source->DirectMixMatrix));
 
     Source->Radius = 0.0f;
+    Source->DirectLfeSend = 0.0f;
 
     Source->DistanceModel = DefaultDistanceModel;
 

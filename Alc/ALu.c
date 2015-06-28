@@ -895,6 +895,8 @@ ALvoid CalcSourceParams(ALvoice *voice, const ALsource *ALSource, const ALCconte
     ALfloat WetGainLF[MAX_SENDS];
     ALboolean WetGainAuto;
     ALboolean WetGainHFAuto;
+    ALint LfeChanIdx = -1;
+    ALfloat LfeGain;
     ALfloat Pitch;
     ALuint Frequency;
     ALint NumSends;
@@ -913,6 +915,7 @@ ALvoid CalcSourceParams(ALvoice *voice, const ALsource *ALSource, const ALCconte
     SpeedOfSound  = ALContext->SpeedOfSound * ALContext->DopplerVelocity;
     NumSends      = Device->NumAuxSends;
     Frequency     = Device->Frequency;
+    LfeChanIdx    = GetChannelIdxByName(Device, LFE);
 
     /* Get listener properties */
     ListenerGain  = ALContext->Listener->Gain;
@@ -936,6 +939,7 @@ ALvoid CalcSourceParams(ALvoice *voice, const ALsource *ALSource, const ALCconte
     WetGainAuto     = ALSource->WetGainAuto;
     WetGainHFAuto   = ALSource->WetGainHFAuto;
     RoomRolloffBase = ALSource->RoomRolloffFactor;
+    LfeGain         = ALSource->DirectLfeSend;
 
     voice->Direct.OutBuffer = Device->DryBuffer;
     voice->Direct.OutChannels = Device->NumChannels;
@@ -1281,6 +1285,8 @@ ALvoid CalcSourceParams(ALvoice *voice, const ALsource *ALSource, const ALCconte
                 spread = 2.0f*asinf(radius / Distance);
         }
         ComputeDirectionalGains(Device, dir, spread, DryGain, Target);
+        if (LfeChanIdx != -1)
+            Target[LfeChanIdx] = maxf(Target[LfeChanIdx], LfeGain*DryGain);
 
         for(j = 0;j < MAX_OUTPUT_CHANNELS;j++)
             gains[j].Target = Target[j];
@@ -1552,6 +1558,8 @@ ALvoid aluMixData(ALCdevice *device, ALvoid *buffer, ALsizei size)
                 device->DryBuffer[1][i] = samples[1];
             }
         }
+
+        // lpfilter 120Hz LFE chan ?  or does the OS, sound card, .... do it later?
 
         if(buffer)
         {

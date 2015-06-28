@@ -74,6 +74,7 @@ typedef struct ALsource {
     volatile ALfloat DopplerFactor;
 
     volatile ALfloat Radius;
+    volatile ALfloat DirectLfeSend;
 
     volatile ALboolean DirectChannels;
     volatile ALuint DirectMixMatrixNumInputChannels;

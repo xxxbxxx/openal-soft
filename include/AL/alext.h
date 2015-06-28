@@ -203,6 +203,13 @@ AL_API void AL_APIENTRY alRequestFoldbackStop(void);
 #define AL_EFFECT_DEDICATED_LOW_FREQUENCY_EFFECT 0x9000
 #endif
 
+#ifndef AL_SOFT_direct_lfe_send
+#define AL_SOFT_direct_lfe_send 1
+/* send source buffer to the device LFE channel.
+   (only applies to spatialised mono sources.) */
+#define AL_DIRECT_LFE_SEND_SOFT 0x1036
+#endif
+
 #ifndef AL_SOFT_buffer_samples
 #define AL_SOFT_buffer_samples 1
 /* Channel configurations */
