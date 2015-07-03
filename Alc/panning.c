@@ -111,11 +111,16 @@ void ComputeDirectionalGains(const ALCdevice *device, const ALfloat dir[3], ALfl
 {
     ALfloat coeffs[MAX_AMBI_COEFFS];
     ALuint i, j;
-    /* Convert from OpenAL coords to Ambisonics. */
+    /* Convert from OpenAL coords to Ambisonics.
+    * dir must be normalized, otherwise loudness changes. */
     ALfloat x = -dir[2];
     ALfloat y = -dir[0];
     ALfloat z =  dir[1];
 
+    /* special case: if the rendering device is unable to render vertical sounds (usual case with headphones/5.1 ...)
+     *        only the zeroth-order component is used, so we need to compensate for lost loudness. */
+    ALfloat omniratio = device->AmbiElevationtoOmni * fabsf(z);
+ 
     /* Zeroth-order */
     coeffs[0]  = 1.0f; /* ACN 0 = 1 */
     /* First-order */
@@ -139,10 +144,11 @@ void ComputeDirectionalGains(const ALCdevice *device, const ALfloat dir[3], ALfl
 
     for(i = 0;i < device->NumChannels;i++)
     {
-        float gain = 0.0f;
+        ALfloat omnigain = sqrtf(device->AmbiCoeffs[i][0]/1.4142f);
+        ALfloat gain = 0.0f;
         for(j = 0;j < MAX_AMBI_COEFFS;j++)
             gain += device->AmbiCoeffs[i][j]*coeffs[j];
-        gains[i] = gain * ingain;
+        gains[i] = ingain * lerp(gain, omnigain, omniratio);
     }
     for(;i < MAX_OUTPUT_CHANNELS;i++)
         gains[i] = 0.0f;
@@ -198,6 +204,7 @@ static void SetChannelMap(ALCdevice *device, const ChannelMap *chanmap, size_t c
 {
     size_t j, k;
     ALuint i;
+    ALboolean can_render_z;
 
     device->AmbiScale = ambiscale;
     for(i = 0;i < MAX_OUTPUT_CHANNELS && device->ChannelName[i] != InvalidChannel;i++)
@@ -234,6 +241,15 @@ static void SetChannelMap(ALCdevice *device, const ChannelMap *chanmap, size_t c
             ERR("Failed to match %s channel (%u) in config\n", GetLabelFromChannel(device->ChannelName[i]), i);
     }
     device->NumChannels = i;
+
+    device->AmbiElevationtoOmni = 0.f;
+	can_render_z = AL_FALSE;
+    for(i = 0;i < device->NumChannels;i++)
+        if (device->AmbiCoeffs[i][2] > FLT_EPSILON)
+            can_render_z = AL_TRUE;
+    if (!can_render_z)
+        device->AmbiElevationtoOmni = 1.f;
+
 }
 
 static bool LoadChannelSetup(ALCdevice *device)
@@ -468,6 +484,7 @@ ALvoid aluInitPanning(ALCdevice *device)
     size_t count = 0;
 
     device->AmbiScale = 1.0f;
+    device->AmbiElevationtoOmni = 0.0f;
     memset(device->AmbiCoeffs, 0, sizeof(device->AmbiCoeffs));
     device->NumChannels = 0;
 

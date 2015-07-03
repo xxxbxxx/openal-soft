@@ -477,6 +477,7 @@ struct ALCdevice_struct
     enum Channel ChannelName[MAX_OUTPUT_CHANNELS];
     ChannelConfig AmbiCoeffs[MAX_OUTPUT_CHANNELS];
     ALfloat AmbiScale; /* Scale for first-order XYZ inputs using AmbCoeffs. */
+	ALfloat AmbiElevationtoOmni; /* convert the elevation to omnidir sound. */
     ALuint NumChannels;
 
     ALuint64 ClockBase;
