@@ -267,7 +267,7 @@ static HRESULT probe_devices(IMMDeviceEnumerator *devenum, EDataFlow flowdir, ve
         }
 
         hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, flowdir,
-                                                         eMultimedia, &defdev);
+                                                         eConsole, &defdev);
     }
     if(SUCCEEDED(hr) && defdev != NULL)
     {
@@ -761,7 +761,7 @@ static HRESULT ALCmmdevPlayback_openProxy(ALCmmdevPlayback *self)
     {
         IMMDeviceEnumerator *Enumerator = ptr;
         if(!self->devid)
-            hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(Enumerator, eRender, eMultimedia, &self->mmdev);
+            hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(Enumerator, eRender, eConsole, &self->mmdev);
         else
             hr = IMMDeviceEnumerator_GetDevice(Enumerator, self->devid, &self->mmdev);
         IMMDeviceEnumerator_Release(Enumerator);
@@ -1440,7 +1440,7 @@ static HRESULT ALCmmdevCapture_openProxy(ALCmmdevCapture *self)
     {
         IMMDeviceEnumerator *Enumerator = ptr;
         if(!self->devid)
-            hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(Enumerator, eCapture, eMultimedia, &self->mmdev);
+            hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(Enumerator, eCapture, eConsole, &self->mmdev);
         else
             hr = IMMDeviceEnumerator_GetDevice(Enumerator, self->devid, &self->mmdev);
         IMMDeviceEnumerator_Release(Enumerator);
