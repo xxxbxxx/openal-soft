@@ -62,7 +62,7 @@ DEFINE_PROPERTYKEY(PKEY_AudioEndpoint_FormFactor, 0x1da5d803, 0xd492, 0x4edd, 0x
 #define X7DOT1 (SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT|SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY|SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT|SPEAKER_SIDE_LEFT|SPEAKER_SIDE_RIGHT)
 #define X7DOT1_WIDE (SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT|SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY|SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT|SPEAKER_FRONT_LEFT_OF_CENTER|SPEAKER_FRONT_RIGHT_OF_CENTER)
 
-#define DEVNAME_HEAD "OpenAL Soft on "
+#define DEVNAME_TAIL " [OpenAL Soft]"
 
 
 typedef struct {
@@ -125,13 +125,14 @@ static void get_device_name(IMMDevice *device, al_string *name)
     PROPVARIANT pvname;
     HRESULT hr;
 
-    al_string_copy_cstr(name, DEVNAME_HEAD);
+    al_string_copy_cstr(name, "");
 
     hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
     if(FAILED(hr))
     {
         WARN("OpenPropertyStore failed: 0x%08lx\n", hr);
         al_string_append_cstr(name, "Unknown Device Name");
+        al_string_append_cstr(name, DEVNAME_TAIL);
         return;
     }
 
@@ -150,6 +151,7 @@ static void get_device_name(IMMDevice *device, al_string *name)
         WARN("Unexpected PROPVARIANT type: 0x%04x\n", pvname.vt);
         al_string_append_cstr(name, "Unknown Device Name");
     }
+    al_string_append_cstr(name, DEVNAME_TAIL);
 
     PropVariantClear(&pvname);
     IPropertyStore_Release(ps);
