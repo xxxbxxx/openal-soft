@@ -68,7 +68,7 @@ DEFINE_PROPERTYKEY(PKEY_AudioEndpoint_GUID, 0x1da5d803, 0xd492, 0x4edd, 0x8c, 0x
 
 #define REFTIME_PER_SEC ((REFERENCE_TIME)10000000)
 
-#define DEVNAME_HEAD "OpenAL Soft on "
+#define DEVNAME_TAIL " [OpenAL Soft]"
 
 
 /* Scales the given value using 64-bit integer math, ceiling the result. */
@@ -150,7 +150,7 @@ static void get_device_name_and_guid(IMMDevice *device, al_string *name, al_stri
     PROPVARIANT pvguid;
     HRESULT hr;
 
-    alstr_copy_cstr(name, DEVNAME_HEAD);
+    alstr_copy_cstr(name, "");
 
     hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
     if(FAILED(hr))
@@ -158,6 +158,7 @@ static void get_device_name_and_guid(IMMDevice *device, al_string *name, al_stri
         WARN("OpenPropertyStore failed: 0x%08lx\n", hr);
         alstr_append_cstr(name, "Unknown Device Name");
         if(guid!=NULL)alstr_copy_cstr(guid, "Unknown Device GUID");
+        alstr_append_cstr(name, DEVNAME_TAIL);
         return;
     }
 
@@ -177,6 +178,9 @@ static void get_device_name_and_guid(IMMDevice *device, al_string *name, al_stri
         alstr_append_cstr(name, "Unknown Device Name");
     }
     PropVariantClear(&pvname);
+
+    alstr_append_cstr(name, DEVNAME_TAIL);
+
 
     if(guid!=NULL){
         PropVariantInit(&pvguid);

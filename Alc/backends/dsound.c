@@ -61,7 +61,7 @@
 DEFINE_GUID(KSDATAFORMAT_SUBTYPE_PCM, 0x00000001, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 DEFINE_GUID(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 0x00000003, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 
-#define DEVNAME_HEAD "OpenAL Soft on "
+#define DEVNAME_TAIL " [OpenAL Soft]"
 
 
 #ifdef HAVE_DYNLOAD
@@ -146,8 +146,9 @@ static BOOL CALLBACK DSoundEnumDevices(GUID *guid, const WCHAR *desc, const WCHA
     {
         const DevMap *iter;
 
-        alstr_copy_cstr(&entry.name, DEVNAME_HEAD);
+		alstr_copy_cstr(&entry.name, "");
         alstr_append_wcstr(&entry.name, desc);
+ 		alstr_append_cstr(&entry.name, DEVNAME_TAIL);
         if(count != 0)
         {
             char str[64];
