@@ -238,6 +238,19 @@ static inline ALvoid DelayLineIn(DelayLine *Delay, ALuint offset, ALfloat in)
     Delay->Line[offset&Delay->Mask] = in;
 }
 
+#if defined(_WIN32) && !defined (_M_X64) && !defined(_M_ARM)
+static inline float hack_modff(_In_ float _X, _Out_ float *_Y)		// buggy microsoft header for C 32-bits modff().
+{ 
+	double _Di;
+	double _Df = modf((double)_X, &_Di);
+	*_Y = (float)_Di;
+	return ((float)_Df); 
+}
+#else
+#define hack_modff modff
+#endif
+
+
 // Given an input sample, this function produces modulation for the late
 // reverb.
 static inline ALfloat EAXModulation(ALreverbState *State, ALuint offset, ALfloat in)
@@ -261,7 +274,7 @@ static inline ALfloat EAXModulation(ALreverbState *State, ALuint offset, ALfloat
                              State->Mod.Coeff);
 
     // Calculate the read offset and fraction between it and the next sample.
-    frac = modff(State->Mod.Filter*sinus + 1.0f, &fdelay);
+    frac = hack_modff(State->Mod.Filter*sinus + 1.0f, &fdelay);
     delay = fastf2u(fdelay);
 
     // Get the two samples crossed by the offset, and feed the delay line
@@ -1088,8 +1101,8 @@ static ALvoid Update3DPanning(const ALCdevice *Device, const ALfloat *Reflection
              * instead of
              * -135 -> 0 -> +135 */
             float offset, naz, nev;
-            naz = EarlyPanAngles[i] + (modff((az-EarlyPanAngles[i])*length/F_TAU + 1.5f, &offset)-0.5f)*F_TAU;
-            nev =                     (modff((ev                  )*length/F_TAU + 1.5f, &offset)-0.5f)*F_TAU;
+            naz = EarlyPanAngles[i] + (hack_modff((az-EarlyPanAngles[i])*length/F_TAU + 1.5f, &offset)-0.5f)*F_TAU;
+            nev =                     (hack_modff((ev                  )*length/F_TAU + 1.5f, &offset)-0.5f)*F_TAU;
             ComputeAngleGains(Device, naz, nev, Gain, State->Early.PanGain[i]);
         }
     }
@@ -1109,8 +1122,8 @@ static ALvoid Update3DPanning(const ALCdevice *Device, const ALfloat *Reflection
         for(i = 0;i < 4;i++)
         {
             float offset, naz, nev;
-            naz = LatePanAngles[i] + (modff((az-LatePanAngles[i])*length/F_TAU + 1.5f, &offset)-0.5f)*F_TAU;
-            nev =                    (modff((ev                 )*length/F_TAU + 1.5f, &offset)-0.5f)*F_TAU;
+            naz = LatePanAngles[i] + (hack_modff((az-LatePanAngles[i])*length/F_TAU + 1.5f, &offset)-0.5f)*F_TAU;
+            nev =                    (hack_modff((ev                 )*length/F_TAU + 1.5f, &offset)-0.5f)*F_TAU;
             ComputeAngleGains(Device, naz, nev, Gain, State->Late.PanGain[i]);
         }
     }
