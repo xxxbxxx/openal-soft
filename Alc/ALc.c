@@ -4011,12 +4011,17 @@ ALC_API ALCboolean ALC_APIENTRY alcResetDeviceSOFT(ALCdevice *device, const ALCi
     ALCenum err;
 
     LockLists();
-    if(!VerifyDevice(&device) || device->Type == Capture || !device->Connected)
+    if(!VerifyDevice(&device) || device->Type == Capture)
     {
         UnlockLists();
         alcSetError(device, ALC_INVALID_DEVICE);
         if(device) ALCdevice_DecRef(device);
         return ALC_FALSE;
+    }
+    if (!device->Connected)
+    {
+        // try reconnect..
+        device->Connected = ALC_TRUE;
     }
 
     if((err=UpdateDeviceParams(device, attribs)) != ALC_NO_ERROR)
