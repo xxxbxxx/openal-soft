@@ -640,7 +640,7 @@ static HRESULT ALCwasapiPlayback_TryRecover(ALCwasapiPlayback* self)
         al_nssleep(recovery_sleep * 100000000);        // *100ms
         if (ATOMIC_LOAD(&self->killNow, almemory_order_relaxed))
             return NOERROR;    // return to ALCwasapiPlayback_mixerProc() and exit the thread.
-        hr = ALCwasapiPlayback_resetProxy_forceFlags(self, DEVICE_CHANNELS_REQUEST|DEVICE_FREQUENCY_REQUEST);
+        hr = ALCwasapiPlayback_resetProxy_forceFlags(self, DEVICE_CHANNELS_REQUEST); // DEVICE_FREQUENCY_REQUEST
         if (SUCCEEDED(hr)) {
             hr = IAudioClient_Start(self->client);
             if (FAILED(hr)) {
