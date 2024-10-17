@@ -182,7 +182,7 @@ endif()
 
 set(LIB_MAJOR_VERSION "1")
 set(LIB_MINOR_VERSION "23")
-set(LIB_REVISION "1")
+set(LIB_REVISION "99")
 set(LIB_VERSION "${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_REVISION}")
 set(LIB_VERSION_NUM ${LIB_MAJOR_VERSION},${LIB_MINOR_VERSION},${LIB_REVISION},0)
 
@@ -1293,7 +1293,7 @@ endif()
 if(NOT WIN32)
     set(LIBNAME "openal")
 else()
-    set(LIBNAME "OpenAL32")
+    set(LIBNAME "OpenAL64_bundled")
 endif()
 
 # Needed for openal.pc.in
