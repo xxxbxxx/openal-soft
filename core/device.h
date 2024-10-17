@@ -41,8 +41,12 @@ inline constexpr std::size_t MinOutputRate{8000};
 inline constexpr std::size_t MaxOutputRate{192000};
 inline constexpr std::size_t DefaultOutputRate{48000};
 
-inline constexpr std::size_t DefaultUpdateSize{960}; /* 20ms */
-inline constexpr std::size_t DefaultNumUpdates{3};
+//inline constexpr std::size_t DefaultUpdateSize{960}; /* 20ms */
+//inline constexpr std::size_t DefaultNumUpdates{3};
+
+// setting for TMTurbo&Shootmania. this latency seems ok. 3 updates glitches sometimes under very heavy cpu load.
+inline constexpr std::size_t DefaultUpdateSize{ 480 }; /* 10ms */
+inline constexpr std::size_t DefaultNumUpdates{ 4 };
 
 
 enum class DeviceType : std::uint8_t {
