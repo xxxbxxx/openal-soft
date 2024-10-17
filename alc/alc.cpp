@@ -281,9 +281,9 @@ BackendFactory *CaptureFactory{};
 [[nodiscard]] constexpr auto GetDefaultName() noexcept { return "OpenAL Soft\0"; }
 
 #ifdef _WIN32
-[[nodiscard]] constexpr auto GetDevicePrefix() noexcept { return "OpenAL Soft on "sv; }
+[[nodiscard]] constexpr auto GetDeviceSuffix() noexcept { return " [OpenAL Soft]"sv; }
 #else
-[[nodiscard]] constexpr auto GetDevicePrefix() noexcept { return std::string_view{}; }
+[[nodiscard]] constexpr auto GetDeviceSuffix() noexcept { return std::string_view{}; }
 #endif
 
 /************************************************
@@ -740,9 +740,9 @@ void ProbeAllDevicesList()
     else
     {
         alcAllDevicesArray = PlaybackFactory->enumerate(BackendType::Playback);
-        if(const auto prefix = GetDevicePrefix(); !prefix.empty())
+        if(const auto suffix = GetDeviceSuffix(); !suffix.empty())
             std::for_each(alcAllDevicesArray.begin(), alcAllDevicesArray.end(),
-                [prefix](std::string &name) { name.insert(0, prefix); });
+                [suffix](std::string &name) { name.append(suffix); });
 
         decltype(alcAllDevicesList){}.swap(alcAllDevicesList);
         if(alcAllDevicesArray.empty())
@@ -764,9 +764,9 @@ void ProbeCaptureDeviceList()
     else
     {
         alcCaptureDeviceArray = CaptureFactory->enumerate(BackendType::Capture);
-        if(const auto prefix = GetDevicePrefix(); !prefix.empty())
+        if(const auto suffix = GetDeviceSuffix(); !suffix.empty())
             std::for_each(alcCaptureDeviceArray.begin(), alcCaptureDeviceArray.end(),
-                [prefix](std::string &name) { name.insert(0, prefix); });
+                [suffix](std::string &name) { name.append(suffix); });
 
         decltype(alcCaptureDeviceList){}.swap(alcCaptureDeviceList);
         if(alcCaptureDeviceArray.empty())
@@ -2927,10 +2927,10 @@ ALC_API ALCdevice* ALC_APIENTRY alcOpenDevice(const ALCchar *deviceName) noexcep
             devname = {};
         else
         {
-            const auto prefix = GetDevicePrefix();
-            if(!prefix.empty() && devname.size() > prefix.size()
-                && al::starts_with(devname, prefix))
-                devname = devname.substr(prefix.size());
+            const auto suffix = GetDeviceSuffix();
+            if(!suffix.empty() && devname.size() > suffix.size()
+                && al::ends_with(devname, suffix))
+                devname = devname.substr(0, devname.size()-suffix.size());
         }
     }
     else
@@ -2968,7 +2968,7 @@ ALC_API ALCdevice* ALC_APIENTRY alcOpenDevice(const ALCchar *deviceName) noexcep
         auto backend = PlaybackFactory->createBackend(device.get(), BackendType::Playback);
         std::lock_guard<std::recursive_mutex> listlock{ListLock};
         backend->open(devname);
-        device->mDeviceName = std::string{GetDevicePrefix()}+backend->mDeviceName;
+        device->mDeviceName = backend->mDeviceName+ std::string{GetDeviceSuffix()};
         device->Backend = std::move(backend);
     }
     catch(al::backend_exception &e) {
@@ -3091,10 +3091,10 @@ ALC_API ALCdevice* ALC_APIENTRY alcCaptureOpenDevice(const ALCchar *deviceName, 
             devname = {};
         else
         {
-            const auto prefix = GetDevicePrefix();
-            if(!prefix.empty() && devname.size() > prefix.size()
-                && al::starts_with(devname, prefix))
-                devname = devname.substr(prefix.size());
+            const auto suffix = GetDeviceSuffix();
+            if(!suffix.empty() && devname.size() > suffix.size()
+                && al::ends_with(devname, suffix))
+                devname = devname.substr(0, devname.size()-suffix.size());
         }
     }
     else
@@ -3133,7 +3133,7 @@ ALC_API ALCdevice* ALC_APIENTRY alcCaptureOpenDevice(const ALCchar *deviceName, 
         auto backend = CaptureFactory->createBackend(device.get(), BackendType::Capture);
         std::lock_guard<std::recursive_mutex> listlock{ListLock};
         backend->open(devname);
-        device->mDeviceName = std::string{GetDevicePrefix()}+backend->mDeviceName;
+        device->mDeviceName = backend->mDeviceName+std::string{GetDeviceSuffix()};
         device->Backend = std::move(backend);
     }
     catch(al::backend_exception &e) {
@@ -3311,7 +3311,7 @@ ALC_API ALCdevice* ALC_APIENTRY alcLoopbackOpenDeviceSOFT(const ALCchar *deviceN
         auto backend = LoopbackBackendFactory::getFactory().createBackend(device.get(),
             BackendType::Playback);
         backend->open("Loopback");
-        device->mDeviceName = std::string{GetDevicePrefix()}+backend->mDeviceName;
+        device->mDeviceName = backend->mDeviceName+std::string{GetDeviceSuffix()};
         device->Backend = std::move(backend);
     }
     catch(al::backend_exception &e) {
@@ -3525,10 +3525,10 @@ FORCE_ALIGN ALCboolean ALC_APIENTRY alcReopenDeviceSOFT(ALCdevice *device,
             devname = {};
         else
         {
-            const auto prefix = GetDevicePrefix();
-            if(!prefix.empty() && devname.size() > prefix.size()
-                && al::starts_with(devname, prefix))
-                devname = devname.substr(prefix.size());
+            const auto suffix = GetDeviceSuffix();
+            if(!suffix.empty() && devname.size() > suffix.size()
+                && al::ends_with(devname, suffix))
+                devname = devname.substr(0, devname.size()-suffix.size());
         }
     }
 
@@ -3568,7 +3568,7 @@ FORCE_ALIGN ALCboolean ALC_APIENTRY alcReopenDeviceSOFT(ALCdevice *device,
         return ALC_FALSE;
     }
     listlock.unlock();
-    dev->mDeviceName = std::string{GetDevicePrefix()}+newbackend->mDeviceName;
+    dev->mDeviceName = newbackend->mDeviceName+std::string{GetDeviceSuffix()};
     dev->Backend = std::move(newbackend);
     dev->mDeviceState = DeviceState::Unprepared;
     TRACE("Reopened device %p, \"%s\"\n", voidp{dev.get()}, dev->mDeviceName.c_str());
