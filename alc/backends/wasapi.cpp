@@ -612,7 +612,7 @@ struct DeviceHelper final : private IMMNotificationClient
 
     STDMETHODIMP OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDefaultDeviceId) noexcept override
     {
-        if(role != eMultimedia)
+        if(role != eConsole)
             return S_OK;
 
         const std::wstring_view devid{pwstrDefaultDeviceId ? pwstrDefaultDeviceId
@@ -656,7 +656,7 @@ struct DeviceHelper final : private IMMNotificationClient
         if(mEnumerator)
         {
             if(devid.empty())
-                hr = mEnumerator->GetDefaultAudioEndpoint(flow, eMultimedia, al::out_ptr(device));
+                hr = mEnumerator->GetDefaultAudioEndpoint(flow, eConsole, al::out_ptr(device));
             else
                 hr = mEnumerator->GetDevice(devid.data(), al::out_ptr(device));
         }
@@ -731,7 +731,7 @@ struct DeviceHelper final : private IMMNotificationClient
             list.reserve(count);
 
         ComPtr<IMMDevice> device;
-        hr = mEnumerator->GetDefaultAudioEndpoint(flowdir, eMultimedia, al::out_ptr(device));
+        hr = mEnumerator->GetDefaultAudioEndpoint(flowdir, eConsole, al::out_ptr(device));
         if(SUCCEEDED(hr))
         {
             if(WCHAR *devid{GetDeviceId(device.get())})
