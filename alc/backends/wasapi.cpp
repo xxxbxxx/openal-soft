@@ -1961,7 +1961,8 @@ HRESULT WasapiPlayback::resetProxy()
 
 #if !defined(ALSOFT_UWP)
     const EndpointFormFactor formfactor{GetDeviceFormfactor(mMMDev.get())};
-    mDevice->Flags.set(DirectEar, (formfactor == Headphones || formfactor == Headset));
+    bool ForceHeadphones = ((formfactor == UnknownFormFactor || formfactor == Speakers) && mDevice->FmtChans == DevFmtStereo);     // don't trust the formfactor, and set stereo => headphones. (will apply the hrtf effect on speakers, if not explicitly disabled. But it's better than not having it on heaedphones for lack of proper detection.)
+    mDevice->Flags.set(DirectEar, (formfactor == Headphones || formfactor == Headset || ForceHeadphones));
 #else
     mDevice->Flags.set(DirectEar, false);
 #endif
